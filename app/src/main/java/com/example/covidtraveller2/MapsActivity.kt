@@ -7,6 +7,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.covidtraveller2.map.MapsEvent
 import com.example.covidtraveller2.map.MapsViewModel
+import com.example.covidtraveller2.model.Country
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -23,7 +24,7 @@ private val POLAND = LatLng(51.919438, 19.145136)
 /**
  * Ustawianie znaczników na mapie z MapsVM
  * Przejścia do innych ekranów
- * Obsługa wyboru markerów
+ * Obsługa wyboru kraju destynacji
  */
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -31,6 +32,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private var selectedMarker : Marker? = null
     private var positionTO : LatLng? = null
+    private var countries = arrayListOf<Country>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,15 +47,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         initListeners()
-        viewModel.readCountriesFromCsv() //todo move
+        initData()
+    }
 
+    private fun initData() {
+        val inputStream = applicationContext.assets.open("countries_locations.csv")
+        viewModel.readCountriesFromCsv(inputStream)
     }
 
     private fun initListeners() {
         viewModel.event.observe(this, Observer { event ->
             when(event) {
                 is MapsEvent.CountriesReadSuccess -> {
-                    event.countries.forEach { c ->
+                    countries = event.countries
+                    countries.forEach { c ->
                         //todo warunek mapReady
                         mMap.addMarker(MarkerOptions().position(LatLng(c.latitude, c.longitude)).title(c.name))
                     }
@@ -126,20 +133,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-//todo move to other class
-//    private fun getCountryByLatLng(searched: LatLng) : String {
-//        countriesList.forEach { country ->
-//            if (country.latitude.equals(searched.latitude))
-//                if (country.longitude.equals(searched.longitude))
-//                    return country.name
-//        }
-//        return "incorrect"
-//    }
+//todo maybe move to other class
+    private fun getCountryByLatLng(searched: LatLng) : String {
+        countries.forEach { country ->
+            if (country.latitude.equals(searched.latitude))
+                if (country.longitude.equals(searched.longitude))
+                    return country.name
+        }
+        return "incorrect" //todo manage
+    }
 
+    //todo manage null
     private fun triggerResult() {
         if (positionTO != null) {
-//            val countryTO = getCountryByLatLng(positionTO!!)
-//            Log.i(TAG, "Selected TO: $countryTO")
+            val countryTO = getCountryByLatLng(positionTO!!)
+            Log.i(TAG, "Selected TO: $countryTO")
 
 //            val i = Intent(this@MapsActivity, ResultActivity::class.java)
 //            i.putExtra("countryTO", countryTO)

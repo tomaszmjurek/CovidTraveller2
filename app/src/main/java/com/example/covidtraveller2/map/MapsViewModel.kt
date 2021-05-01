@@ -5,12 +5,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.covidtraveller2.model.Country
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
-import java.io.IOException
-import java.lang.Exception
+import java.io.InputStream
 
 /**
- * Wczytywanie lokalizacji z CSV
- *
+ * Inputstream shouldn't be passed as argument.
+ * Should be replaced with data binding (ex. JetPack).
  */
 
 class MapsViewModel : ViewModel() {
@@ -18,7 +17,7 @@ class MapsViewModel : ViewModel() {
 
     var event = MutableLiveData<MapsEvent>()
 
-    fun readCountriesFromCsv() {
+    fun readCountriesFromCsv(inputStream: InputStream) {
         val tsvReader = csvReader {
             charset = "UTF-8"
             delimiter = ';'
@@ -26,8 +25,7 @@ class MapsViewModel : ViewModel() {
         }
 
         try {
-            //todo wczytywanie z assets
-            tsvReader.open("countries_locations.csv") {
+            tsvReader.open(inputStream) {
                 var countries = ArrayList<Country>()
                 readAllAsSequence().forEach { row ->
                     var country = Country(
